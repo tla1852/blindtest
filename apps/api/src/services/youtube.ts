@@ -18,7 +18,7 @@ export async function importFromYoutube(url: string) {
     name = meta.items?.[0]?.snippet?.title ?? name;
   } catch {}
 
-  const tracks: Array<{ title: string; artist?: string; imageUrl?: string }> = [];
+  const tracks: Array<{ title: string; artist?: string; year?: number; imageUrl?: string; previewUrl?: string }> = [];
   let pageToken: string | undefined = undefined;
   do {
     const u = new URL('https://www.googleapis.com/youtube/v3/playlistItems');
