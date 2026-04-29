@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
-// 127.0.0.1 explicite (pas localhost) pour éviter la résolution IPv6 ::1 → ECONNREFUSED
-const API_INTERNAL = process.env.INTERNAL_API_URL ?? 'http://127.0.0.1:4000';
+// Lu au build time — si INTERNAL_API_URL est défini (build-arg), on l'utilise.
+// Sinon on tape sur le service Docker `api:4000`. Le fallback historique
+// 127.0.0.1:4000 ne fonctionne que pour un setup hors-Docker.
+const API_INTERNAL = process.env.INTERNAL_API_URL ?? 'http://api:4000';
 
 const nextConfig = {
   reactStrictMode: true,
