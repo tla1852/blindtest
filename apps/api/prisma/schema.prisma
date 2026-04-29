@@ -1,0 +1,209 @@
+// RetroBuzz — schéma de base de données
+// Cf. §6 du cahier des charges v1.3
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GameMode {
+  FFA
+  TDM
+}
+
+enum GameStatus {
+  waiting
+  playing
+  finished
+}
+
+enum SourceType {
+  film
+  manga
+  jeu
+  serie
+  autre
+}
+
+enum HintSource {
+  manual
+  n8n
+}
+
+enum Platform {
+  spotify
+  youtube
+  deezer
+  manual
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  playlists    Playlist[]
+  games        Game[]
+}
+
+model Playlist {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  sourceUrl      String?
+  sourcePlatform Platform  @default(manual)
+  trackCount     Int       @default(0)
+  // Chemin absolu du fichier .md local (app Windows animateur) — CDC §7.4
+  mdFilePath     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tracks         Track[]
+  games          Game[]
+
+  @@index([userId])
+}
+
+model Track {
+  id          String       @id @default(cuid())
+  playlistId  String
+  playlist    Playlist     @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  title       String
+  artist      String?
+  year        Int?
+  sourceType  SourceType?
+  sourceName  String?
+  imageUrl    String?
+  previewUrl  String?      // URL MP3 30s (Deezer `preview`) — fallback si pas de fichier local
+  // Chemin du fichier audio local sur le PC animateur — CDC §3.4 / §7.4
+  filePath    String?
+  hasBonus    Boolean      @default(false)
+  position    Int
+  hints       TrackHint[]
+  buzzes      Buzz[]
+  scores      Score[]
+
+  @@index([playlistId])
+  @@unique([playlistId, position])
+}
+
+model TrackHint {
+  id        String      @id @default(cuid())
+  trackId   String
+  track     Track       @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  hintText  String
+  hintOrder Int         @default(0)
+  source    HintSource  @default(manual)
+
+  @@index([trackId])
+}
+
+model TrackMetadata {
+  id              String      @id @default(cuid())
+  title           String
+  artist          String?
+  year            Int?
+  genre           String?
+  sourceType      SourceType?
+  sourceName      String?
+  imageUrl        String?
+  additionalInfo  Json?
+  n8nEnriched     Boolean     @default(false)
+  enrichedAt      DateTime?
+
+  @@index([title, artist])
+}
+
+model Game {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  playlistId      String
+  playlist        Playlist    @relation(fields: [playlistId], references: [id])
+  mode            GameMode    @default(FFA)
+  status          GameStatus  @default(waiting)
+  maxTeams        Int         @default(8)
+  buzzersPerTeam  Int         @default(2)
+  delayBeforeBuzz Int         @default(0)
+  currentTrackIdx Int         @default(0)
+  createdAt       DateTime    @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  teams           Team[]
+  players         Player[]
+  buzzes          Buzz[]
+  scores          Score[]
+
+  @@index([userId])
+}
+
+model Team {
+  id       String   @id @default(cuid())
+  gameId   String
+  game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  name     String
+  color    String
+  players  Player[]
+  scores   Score[]
+
+  @@index([gameId])
+}
+
+model Player {
+  id                String   @id @default(cuid())
+  gameId            String
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  teamId            String?
+  team              Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  pseudo            String
+  deviceFingerprint String?
+  joinedAt          DateTime @default(now())
+  buzzes            Buzz[]
+  scores            Score[]
+
+  @@index([gameId])
+  @@index([teamId])
+}
+
+model Buzz {
+  id              String    @id @default(cuid())
+  gameId          String
+  game            Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  trackId         String
+  track           Track     @relation(fields: [trackId], references: [id])
+  playerId        String
+  player          Player    @relation(fields: [playerId], references: [id])
+  timestampClient BigInt
+  timestampServer BigInt
+  rank            Int
+  validated       Boolean?
+  createdAt       DateTime  @default(now())
+
+  @@index([gameId, trackId])
+  @@index([playerId])
+}
+
+model Score {
+  id          String   @id @default(cuid())
+  gameId      String
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  playerId    String?
+  player      Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  trackId     String
+  track       Track    @relation(fields: [trackId], references: [id])
+  points      Int      @default(1)
+  bonusPoints Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([gameId])
+  @@index([teamId])
+  @@index([playerId])
+}
