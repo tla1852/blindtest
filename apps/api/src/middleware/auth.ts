@@ -3,8 +3,9 @@ import fp from 'fastify-plugin';
 
 export interface JwtPayload {
   sub: string;
-  email: string;
-  displayName: string;
+  email?: string;
+  displayName?: string;
+  type?: 'access' | 'refresh';
 }
 
 declare module '@fastify/jwt' {
