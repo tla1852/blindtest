@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background:
+      radial-gradient(circle at 20% 10%, rgba(168, 85, 247, 0.12), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.10), transparent 45%),
+      #0A0015;
+  }
+}
+
+@layer components {
+  .neon-text-violet {
+    color: #A855F7;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4);
+  }
+  .neon-text-pink {
+    color: #F472B6;
+    text-shadow: 0 0 10px rgba(244, 114, 182, 0.8), 0 0 20px rgba(244, 114, 182, 0.4);
+  }
+  .neon-text-cyan {
+    color: #38BDF8;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(56, 189, 248, 0.4);
+  }
+  .neon-text-gold {
+    color: #FBBF24;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4);
+  }
+  .card {
+    @apply bg-bg-card/70 backdrop-blur border border-white/10 rounded-xl p-5;
+  }
+}
